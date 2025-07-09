@@ -6554,15 +6554,15 @@ function main() {
       "let_assert",
       FILEPATH,
       "bookshelf",
-      85,
+      90,
       "main",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $,
-        start: 2151,
-        end: 2200,
-        pattern_start: 2162,
-        pattern_end: 2167
+        start: 2195,
+        end: 2244,
+        pattern_start: 2206,
+        pattern_end: 2211
       }
     );
   }

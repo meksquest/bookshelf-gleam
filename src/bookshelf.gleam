@@ -12,9 +12,11 @@ import rsvp
 type Model {
   Model(total: Int, cats: List(Cat))
 }
+
 type Cat {
   Cat(id: String, url: String)
 }
+
 type Msg {
   UserClickedAddCat
   UserClickedRemoveCat
@@ -27,21 +29,18 @@ fn init(_args) -> #(Model, Effect(Msg)) {
   #(model, effect.none())
 }
 
-fn update(model: Model, msg: Msg) ->  #(Model, Effect(Msg)) {
+fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
-    UserClickedAddCat -> #(
-      Model(..model, total: model.total + 1),
-      get_cat()
-    )
+    UserClickedAddCat -> #(Model(..model, total: model.total + 1), get_cat())
 
     UserClickedRemoveCat -> #(
       Model(..model, total: model.total - 1, cats: list.drop(model.cats, 1)),
-      effect.none()
+      effect.none(),
     )
 
     ApiReturnedCats(Ok(cats)) -> #(
       Model(..model, cats: list.append(model.cats, cats)),
-      effect.none()
+      effect.none(),
     )
 
     // TODO: Do something with the Error
@@ -67,15 +66,21 @@ fn get_cat() -> Effect(Msg) {
 fn view(model: Model) -> Element(Msg) {
   html.div([], [
     html.div([], [
-      html.button([event.on_click(UserClickedAddCat)], [ html.text("Add cat") ]),
+      html.button([event.on_click(UserClickedAddCat)], [html.text("Add cat")]),
       html.p([], [html.text(int.to_string(model.total))]),
-      html.button([event.on_click(UserClickedRemoveCat)], [ html.text("Remove cat") ]),
+      html.button([event.on_click(UserClickedRemoveCat)], [
+        html.text("Remove cat"),
+      ]),
     ]),
     html.div([], {
       list.map(model.cats, fn(cat) {
-      html.img([attribute.src(cat.url), attribute.width(400), attribute.height(400),])
-    })
-  }),
+        html.img([
+          attribute.src(cat.url),
+          attribute.width(400),
+          attribute.height(400),
+        ])
+      })
+    }),
   ])
 }
 
