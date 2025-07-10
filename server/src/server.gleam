@@ -80,7 +80,7 @@ fn success_response(body: String) -> Response(ResponseData) {
 fn books_string() -> String {
   list_books()
   |> json.array(fn(b) { book_to_json(b) })
-  |> json.to_string()
+  |> json.to_string
 }
 
 fn book_to_json(book: Book) -> json.Json {
