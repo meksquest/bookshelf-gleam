@@ -50,12 +50,11 @@ fn book_to_json(book: Book) -> json.Json {
     #("genre", json.string(book.genre)),
     #("status", json.string(books.status_to_string(book.status))),
     #("cover_art", json.nullable(book.cover_art, json.string)),
-    #(
-      "review",
-      json.nullable(book.review, fn(lines: List(String)) -> Json {
-        json.array(lines, fn(line: String) -> Json { json.string(line) })
-      }),
-    ),
+    #("review", {
+      use lines <- json.nullable(book.review)
+      use line <- json.array(lines)
+      json.string(line)
+    }),
     #(
       "date_read",
       json.nullable(book.date_read, fn(date: Date) -> Json {
