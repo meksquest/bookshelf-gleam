@@ -1,5 +1,8 @@
 import gleam/http.{Get}
-import gleam/json
+import gleam/int
+import gleam/json.{type Json}
+import gleam/string
+import gleam/time/calendar.{type Date}
 import server/books.{type Book}
 import server/web
 import wisp.{type Request, type Response}
@@ -46,5 +49,25 @@ fn book_to_json(book: Book) -> json.Json {
     #("title", json.string(book.title)),
     #("genre", json.string(book.genre)),
     #("status", json.string(books.status_to_string(book.status))),
+    #("cover_art", json.nullable(book.cover_art, json.string)),
+    #(
+      "review",
+      json.nullable(book.review, fn(lines: List(String)) -> Json {
+        json.array(lines, fn(line: String) -> Json { json.string(line) })
+      }),
+    ),
+    #(
+      "date_read",
+      json.nullable(book.date_read, fn(date: Date) -> Json {
+        let day = date.day |> int.to_string
+        let month =
+          date.month
+          |> calendar.month_to_int
+          |> int.to_string
+          |> string.pad_start(to: 2, with: "0")
+        let year = date.year |> int.to_string
+        json.string(string.concat([year, "-", month, "-", day]))
+      }),
+    ),
   ])
 }
