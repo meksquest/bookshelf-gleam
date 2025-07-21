@@ -45,6 +45,10 @@ fn list_books() -> Response {
 }
 
 fn book_to_json(book: Book) -> json.Json {
+  // eventually will want to move to a decoder
+  // which is a special something in gleam, that takes data from the outside
+  // world and turns it into Gleam data.
+  // gleam.dynamic()
   json.object([
     #("author", json.string(book.author)),
     #("title", json.string(book.title)),
