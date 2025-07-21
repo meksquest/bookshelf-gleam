@@ -1,10 +1,10 @@
-import gleam/dict
+import gleam/dict.{type Dict}
 import gleam/list
 import gleam/option.{type Option}
 import gleam/string
 import gleam/time/calendar.{type Date}
 import simplifile
-import tom
+import tom.{type Toml}
 
 pub fn status_to_string(status: Status) -> String {
   case status {
@@ -54,27 +54,42 @@ pub fn list_books() -> List(Book) {
   let assert Ok(input) = simplifile.read("priv/books.toml")
   let assert Ok(toml) = tom.parse(input)
   let assert Ok(tom.ArrayOfTables(books)) = dict.get(toml, "books")
-  list.map(books, fn(x: dict.Dict(String, tom.Toml)) -> Book {
-    let assert Ok(author) = tom.get_string(x, ["author"])
-    let assert Ok(title) = tom.get_string(x, ["title"])
-    let assert Ok(genre) = tom.get_string(x, ["genre"])
-    let assert Ok(string_status) = tom.get_string(x, ["status"])
-    let status = string_to_status(string_status)
-    let cover_art = case tom.get_string(x, ["cover_art"]) {
-      Ok(string_status) -> option.Some(string_status)
-      _ -> option.None
-    }
-    let review = case tom.get_string(x, ["review"]) {
-      Ok(string_review) ->
-        string_review |> string.split("\n\n") |> option.Some()
-      _ -> option.None
-    }
-    let date_read = case tom.get_date(x, ["date_read"]) {
-      Ok(date_date_read) -> option.Some(date_date_read)
-      _ -> option.None
-    }
-
+  list.map(books, fn(entry: dict.Dict(String, tom.Toml)) -> Book {
     // you can do this because it is in the same order as the type
-    Book(author, title, genre, status, cover_art, review, date_read)
+    Book(
+      parse_string(entry, "author"),
+      parse_string(entry, "title"),
+      parse_string(entry, "genre"),
+      parse_string(entry, "status") |> string_to_status,
+      parse_cover_art(entry, "cover_art"),
+      parse_review(entry, "review"),
+      parse_date_read(entry, "date_read"),
+    )
   })
+}
+
+fn parse_string(entry: Dict(String, Toml), key: String) -> String {
+  let assert Ok(entry) = tom.get_string(entry, [key])
+  entry
+}
+
+fn parse_cover_art(entry: Dict(String, Toml), key: String) -> Option(String) {
+  case tom.get_string(entry, [key]) {
+    Ok(string_status) -> option.Some(string_status)
+    _ -> option.None
+  }
+}
+
+fn parse_review(entry: Dict(String, Toml), key: String) -> Option(List(String)) {
+  case tom.get_string(entry, [key]) {
+    Ok(string_review) -> string_review |> string.split("\n\n") |> option.Some()
+    _ -> option.None
+  }
+}
+
+fn parse_date_read(entry: Dict(String, Toml), key: String) -> Option(Date) {
+  case tom.get_date(entry, [key]) {
+    Ok(date_date_read) -> option.Some(date_date_read)
+    _ -> option.None
+  }
 }

@@ -1,6 +1,7 @@
 import gleam/http.{Get}
 import gleam/int
 import gleam/json.{type Json}
+import gleam/option.{type Option}
 import gleam/string
 import gleam/time/calendar.{type Date}
 import server/books.{type Book}
@@ -50,23 +51,26 @@ fn book_to_json(book: Book) -> json.Json {
     #("genre", json.string(book.genre)),
     #("status", json.string(books.status_to_string(book.status))),
     #("cover_art", json.nullable(book.cover_art, json.string)),
-    #("review", {
-      use lines <- json.nullable(book.review)
-      use line <- json.array(lines)
-      json.string(line)
-    }),
-    #(
-      "date_read",
-      json.nullable(book.date_read, fn(date: Date) -> Json {
-        let day = date.day |> int.to_string
-        let month =
-          date.month
-          |> calendar.month_to_int
-          |> int.to_string
-          |> string.pad_start(to: 2, with: "0")
-        let year = date.year |> int.to_string
-        json.string(string.concat([year, "-", month, "-", day]))
-      }),
-    ),
+    #("review", build_review(book.review)),
+    #("date_read", build_date_read(book.date_read)),
   ])
+}
+
+fn build_review(review: Option(List(String))) -> Json {
+  use lines <- json.nullable(review)
+  use line <- json.array(lines)
+  json.string(line)
+}
+
+fn build_date_read(date_read: Option(Date)) -> Json {
+  json.nullable(date_read, fn(date: Date) -> Json {
+    let day = date.day |> int.to_string
+    let month =
+      date.month
+      |> calendar.month_to_int
+      |> int.to_string
+      |> string.pad_start(to: 2, with: "0")
+    let year = date.year |> int.to_string
+    json.string(string.concat([year, "-", month, "-", day]))
+  })
 }
