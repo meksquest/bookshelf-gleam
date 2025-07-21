@@ -61,9 +61,9 @@ pub fn list_books() -> List(Book) {
       parse_string(entry, "title"),
       parse_string(entry, "genre"),
       parse_string(entry, "status") |> string_to_status,
-      parse_cover_art(entry, "cover_art"),
-      parse_review(entry, "review"),
-      parse_date_read(entry, "date_read"),
+      parse_optional_string(entry, "cover_art"),
+      parse_optional_string_list(entry, "review"),
+      parse_date(entry, "date_read"),
     )
   })
 }
@@ -73,21 +73,27 @@ fn parse_string(entry: Dict(String, Toml), key: String) -> String {
   entry
 }
 
-fn parse_cover_art(entry: Dict(String, Toml), key: String) -> Option(String) {
+fn parse_optional_string(
+  entry: Dict(String, Toml),
+  key: String,
+) -> Option(String) {
   case tom.get_string(entry, [key]) {
     Ok(string_status) -> option.Some(string_status)
     _ -> option.None
   }
 }
 
-fn parse_review(entry: Dict(String, Toml), key: String) -> Option(List(String)) {
+fn parse_optional_string_list(
+  entry: Dict(String, Toml),
+  key: String,
+) -> Option(List(String)) {
   case tom.get_string(entry, [key]) {
     Ok(string_review) -> string_review |> string.split("\n\n") |> option.Some()
     _ -> option.None
   }
 }
 
-fn parse_date_read(entry: Dict(String, Toml), key: String) -> Option(Date) {
+fn parse_date(entry: Dict(String, Toml), key: String) -> Option(Date) {
   case tom.get_date(entry, [key]) {
     Ok(date_date_read) -> option.Some(date_date_read)
     _ -> option.None

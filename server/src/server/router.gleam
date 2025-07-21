@@ -51,18 +51,18 @@ fn book_to_json(book: Book) -> json.Json {
     #("genre", json.string(book.genre)),
     #("status", json.string(books.status_to_string(book.status))),
     #("cover_art", json.nullable(book.cover_art, json.string)),
-    #("review", build_review(book.review)),
-    #("date_read", build_date_read(book.date_read)),
+    #("review", json_review(book.review)),
+    #("date_read", json_date_read(book.date_read)),
   ])
 }
 
-fn build_review(review: Option(List(String))) -> Json {
+fn json_review(review: Option(List(String))) -> Json {
   use lines <- json.nullable(review)
   use line <- json.array(lines)
   json.string(line)
 }
 
-fn build_date_read(date_read: Option(Date)) -> Json {
+fn json_date_read(date_read: Option(Date)) -> Json {
   json.nullable(date_read, fn(date: Date) -> Json {
     let day = date.day |> int.to_string
     let month =
