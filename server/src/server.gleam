@@ -14,6 +14,10 @@ pub fn main() -> Nil {
   process.sleep_forever()
 }
 // To send a request and get a response
+// in one terminal session open the server listener with `gleam run` from the
+// root of the server directory
+// then in a separate session also from the root of the directory send requests
+// via
 // `http localhost:4000`
 //
 //❯ http :4000/api/books
