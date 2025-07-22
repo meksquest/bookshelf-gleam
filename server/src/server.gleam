@@ -1,5 +1,6 @@
 import gleam/erlang/process
 import mist
+import server/books_actor
 import server/router
 import wisp
 import wisp/wisp_mist
@@ -11,7 +12,14 @@ pub fn main() -> Nil {
     wisp_mist.handler(router.handle_request, secret_key_base)
     |> mist.new
     |> mist.start
+
+  books_actor.start(books_actor.name())
+
   process.sleep_forever()
+}
+
+pub fn list_books() {
+  process.call(books_actor.name(), 500, books_actor.ListBooks)
 }
 // To send a request and get a response
 // in one terminal session open the server listener with `gleam run` from the
