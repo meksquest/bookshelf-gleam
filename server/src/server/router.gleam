@@ -1,44 +1,53 @@
+import gleam/erlang/process.{type Subject}
 import gleam/http.{Get}
 import gleam/int
 import gleam/json.{type Json}
-import gleam/option.{type Option}
+import gleam/option.{type Option, None, Some}
 import gleam/string
 import gleam/time/calendar.{type Date}
-import server/books.{type Book}
+import server/books.{type Book, type Message}
 import server/web
 import wisp.{type Request, type Response}
 
-pub fn handle_request(req: Request) -> Response {
+// Add repo_subject parameter to handle_request
+pub fn handle_request(req: Request, repo_subject: Subject(Message)) -> Response {
   use _req <- web.middleware(req)
   case wisp.path_segments(req) {
-    ["api", "books"] -> books(req)
+    ["api", "books"] -> books(req, repo_subject)
     _ -> wisp.not_found()
   }
 }
 
-fn books(req: Request) -> Response {
+fn books(req: Request, repo_subject: Subject(Message)) -> Response {
   case req.method {
-    Get -> process_books_request(req)
+    Get -> process_books_request(req, repo_subject)
     _ -> wisp.method_not_allowed([Get])
   }
 }
 
-fn process_books_request(req: Request) -> Response {
+fn process_books_request(
+  req: Request,
+  repo_subject: Subject(Message),
+) -> Response {
   case wisp.get_query(req) {
-    [#("title", title)] -> get_book(title)
-    _ -> list_books()
+    [#("title", title)] -> get_book(title, repo_subject)
+    _ -> list_books(repo_subject)
   }
 }
 
-fn get_book(title: String) -> Response {
-  books.get_book(title)
-  |> book_to_json
-  |> json.to_string_tree
-  |> wisp.json_response(200)
+fn get_book(title: String, repo_subject: Subject(Message)) -> Response {
+  case books.get_book(title, repo_subject) {
+    Some(book) ->
+      book
+      |> book_to_json
+      |> json.to_string_tree
+      |> wisp.json_response(200)
+    None -> wisp.not_found()
+  }
 }
 
-fn list_books() -> Response {
-  books.list_books()
+fn list_books(repo_subject: Subject(Message)) -> Response {
+  books.list_books(repo_subject)
   |> json.array(fn(b) { book_to_json(b) })
   |> json.to_string_tree
   |> wisp.json_response(200)

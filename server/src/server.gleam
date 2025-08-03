@@ -1,5 +1,6 @@
 import gleam/erlang/process
 import mist
+import server/books
 import server/router
 import wisp
 import wisp/wisp_mist
@@ -7,10 +8,18 @@ import wisp/wisp_mist
 pub fn main() -> Nil {
   wisp.configure_logger()
   let secret_key_base = wisp.random_string(64)
+  let assert Ok(repo_subject) = books.start()
+  // Store the subject
+
+  // Pass repo_subject to your router/handlers
   let assert Ok(_) =
-    wisp_mist.handler(router.handle_request, secret_key_base)
+    wisp_mist.handler(
+      fn(req) { router.handle_request(req, repo_subject) },
+      secret_key_base,
+    )
     |> mist.new
     |> mist.start
+
   process.sleep_forever()
 }
 // To send a request and get a response

@@ -1,6 +1,8 @@
 import gleam/dict.{type Dict}
+import gleam/erlang/process.{type Subject}
 import gleam/list
-import gleam/option.{type Option}
+import gleam/option.{type Option, None, Some}
+import gleam/otp/actor.{type StartError}
 import gleam/string
 import gleam/time/calendar.{type Date}
 import simplifile
@@ -43,14 +45,21 @@ pub type Book {
   )
 }
 
-pub fn get_book(title: String) -> Book {
-  let assert Ok(book) =
-    list.find(list_books(), fn(book) { title == book.title })
-
-  book
+pub fn get_book(title: String, repo_subject: Subject(Message)) -> Option(Book) {
+  actor.call(repo_subject, 10, GetBook(title, _))
 }
 
-pub fn list_books() -> List(Book) {
+//pub fn list_books() {
+// whqt I wanted to do, but couldn't get the named subject version working
+//  let named_subject = process.named_subject(process.Name("Repo"))
+//  actor.call(named_subject, 10, ListBooks)
+//}
+
+pub fn list_books(repo_subject: Subject(Message)) -> List(Book) {
+  actor.call(repo_subject, 10, ListBooks)
+}
+
+pub fn load_books() -> List(Book) {
   let assert Ok(input) = simplifile.read("priv/books.toml")
   let assert Ok(toml) = tom.parse(input)
   let assert Ok(tom.ArrayOfTables(books)) = dict.get(toml, "books")
@@ -97,5 +106,48 @@ fn parse_date(entry: Dict(String, Toml), key: String) -> Option(Date) {
   case tom.get_date(entry, [key]) {
     Ok(date_date_read) -> option.Some(date_date_read)
     _ -> option.None
+  }
+}
+
+pub type State =
+  List(Book)
+
+pub type Message {
+  ListBooks(Subject(List(Book)))
+  GetBook(String, Subject(Option(Book)))
+}
+
+pub fn start() -> Result(Subject(Message), StartError) {
+  let initial_state = load_books()
+
+  case
+    actor.new(initial_state)
+    |> actor.on_message(handle_message)
+    |> actor.start
+  {
+    Ok(started) -> Ok(started.data)
+    // Return the subject directly
+    Error(e) -> Error(e)
+  }
+}
+
+// this is the function that will get called when processes a Message
+pub fn handle_message(
+  state: State,
+  message: Message,
+) -> actor.Next(State, Message) {
+  case message {
+    ListBooks(subject) -> {
+      actor.send(subject, state)
+      actor.continue(state)
+    }
+    GetBook(title, subject) -> {
+      let book = case list.find(state, fn(book) { title == book.title }) {
+        Ok(book) -> Some(book)
+        _ -> None
+      }
+      actor.send(subject, book)
+      actor.continue(state)
+    }
   }
 }
