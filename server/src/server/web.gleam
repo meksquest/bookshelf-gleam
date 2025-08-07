@@ -10,4 +10,5 @@ pub fn middleware(
   use req <- wisp.handle_head(req)
 
   handler_request(req)
+  //|> wisp.set_header("access-control-allow-origin", "*")
 }
