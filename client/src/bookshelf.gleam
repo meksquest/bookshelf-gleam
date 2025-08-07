@@ -15,9 +15,9 @@ pub type Status {
 
 pub type Book {
   Book(
-    //author: String,
+    author: String,
     title: String,
-    //genre: String,
+    genre: String,
     //status: Status,
     //cover_art: Option(String),
     //review: Option(List(String)),
@@ -53,8 +53,11 @@ fn get_books() -> Effect(Msg) {
   let decoder = {
     // TODO: rewrite this without using `use`, as a learning experiment
     use title <- decode.field("title", decode.string)
+    use author <- decode.field("author", decode.string)
+    use genre <- decode.field("genre", decode.string)
+    //use status <- decode.field("status", decode.string)
 
-    decode.success(Book(title:))
+    decode.success(Book(title:, author:, genre:))
   }
   let url = "http://localhost:4000/api/books"
   let handler = rsvp.expect_json(decode.list(decoder), ApiReturnedBooks)
@@ -63,9 +66,29 @@ fn get_books() -> Effect(Msg) {
 }
 
 fn view(model: Model) -> Element(Msg) {
-  html.ul([], {
-    list.map(model.books, fn(book) { html.li([], [html.text(book.title)]) })
-  })
+  html.table([], [
+    html.thead([], [
+      html.tr([], [
+        html.th([], [html.text("TITLE")]),
+        html.th([], [html.text("AUTHOR")]),
+        html.th([], [html.text("GENRE")]),
+        html.th([], [html.text("REVIEW")]),
+        html.th([], [html.text("STATUS")]),
+      ]),
+    ]),
+    html.tbody(
+      [],
+      list.map(model.books, fn(book) {
+        html.tr([], [
+          html.td([], [html.text(book.title)]),
+          html.td([], [html.text(book.author)]),
+          html.td([], [html.text(book.genre)]),
+          //html.td([], [html.text(book.review)]),
+        //html.td([], [html.text(book.status)]),
+        ])
+      }),
+    ),
+  ])
 }
 
 // entry point to the application
